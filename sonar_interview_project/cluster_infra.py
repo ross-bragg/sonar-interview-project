@@ -16,10 +16,24 @@ class ClusterInfraStack(Stack):
         asg_instance_type = ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL)
         
         # Allow ingress to instances from Nat GW (private IP?)
-        ecs_cluster_sg.add_ingress_rule(ec2.Peer.ipv4('10.0.28.221/32'), ec2.Port.tcp(22), 'ssh from Nat Gateway')
+        ecs_cluster_sg.add_ingress_rule(
+            ec2.Peer.ipv4('10.0.28.221/32'),
+            ec2.Port.tcp(22),
+            'ssh from Nat Gateway'
+        )
+
+        ecs_cluster_sg.add_egress_rule(
+            ec2.Peer.security_group_id(db_sg.security_group_id),
+            ec2.Port.tcp(5432),
+            'EC2 instance access to DBs'
+        )
 
         # Hook into DB SG, allow access from EC2 instances
-        db_sg.add_ingress_rule(ec2.Peer.security_group_id(ecs_cluster_sg.security_group_id), ec2.Port.tcp(5432), 'DB access from EC2 instances')
+        db_sg.add_ingress_rule(
+            ec2.Peer.security_group_id(ecs_cluster_sg.security_group_id),
+            ec2.Port.tcp(5432),
+            'DB access from EC2 instances'
+        )
 
         ecs_cluster = ecs.Cluster(self, "projectECSCluster",
                                   vpc=vpc)

@@ -19,7 +19,7 @@ class ClusterInfraStack(Stack):
         ecs_cluster_sg.add_ingress_rule(ec2.Peer.ipv4('10.0.28.221/32'), ec2.Port.tcp(22), 'ssh from Nat Gateway')
 
         # Hook into DB SG, allow access from EC2 instances
-        db_sg.add_ingress_rule(ec2.Peer.security_group_id(db_sg.security_group_id), ec2.Port.tcp(5432), 'DB access from EC2 instances')
+        db_sg.add_ingress_rule(ec2.Peer.security_group_id(ecs_cluster_sg.security_group_id), ec2.Port.tcp(5432), 'DB access from EC2 instances')
 
         ecs_cluster = ecs.Cluster(self, "projectECSCluster",
                                   vpc=vpc)
@@ -39,6 +39,5 @@ class ClusterInfraStack(Stack):
         
         ecs_cluster.add_asg_capacity_provider(ecs_asg_cap_provider)
 
-        # export ecs cluster?
+        # export ecs cluster
         self.ecs_cluster = ecs_cluster
-        self.ecs_cluster_sg = ecs_cluster_sg

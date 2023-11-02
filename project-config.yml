@@ -1,0 +1,23 @@
+aws_account: 726431819040
+project_name: sonar-interview-project
+
+vpc_config:
+  cidr:
+  nat_gateways:
+    # - 52.45.31.114/32
+    # - 54.85.14.186/32
+    - 18.214.199.149/32
+  private_subnets:
+    - 10.0.32.0/19
+    - 10.0.96.0/19
+    - 10.0.160.0/19
+  public_subnets:
+  
+
+s3_config:
+
+db_config:
+
+ecs_cluster_config:
+
+ecs_service_config:

@@ -8,7 +8,7 @@ from constructs import Construct
 
 class DbInfraStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, vpc: ec2.Vpc, db_sg: ec2.SecurityGroup, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, vpc: ec2.Vpc, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # make this configurable
@@ -29,11 +29,13 @@ class DbInfraStack(Stack):
                                     #     rds.ClusterInstance.provisioned("reader2", instance_type=db_instance_type)
                                     #   ],
                                       readers=[],
-                                      security_groups=[db_sg],
                                       default_database_name="project",
-
-                                      storage_encrypted=True,
-                                      
                                     )
+        
+        cluster.connections.allow_from(
+            ec2.Peer.any_ipv4(), # should match the VPC CIDR
+            ec2.Port.tcp(5432),
+            "Incoming DB access"
+        )
 
     # Once done, create a custom DNS for the DB Writer endponit and Reader endpoint, emit as CFN output

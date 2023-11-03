@@ -9,6 +9,7 @@ class SgInfraStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, vpc: ec2.Vpc, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
+        # Manage the SGs separately so that we don't run into "dependency in use" issues when deleting
         db_sg = ec2.SecurityGroup(self, "projectDbSg",
                             vpc=vpc,
                             description="Allow ingress from application",

@@ -1,0 +1,31 @@
+project_name: sonar-proj-1 # what's the max length this should be?
+
+aws_config:
+  account: "726431819040"
+  main_region: us-east-1
+  dr_region: us-west-2
+
+vpc_config:
+  cidr: 10.0.0.0/16
+
+s3_config:
+  is_replica: false #?
+
+db_config:
+  instance_type: t4g.large
+  readers: 0
+
+ecs_cluster_config:
+  instance_type: t4g.small
+  min: 1
+  max: 1
+  
+ecs_service_config:
+  image: "public.ecr.aws/nginx/nginx:1.24-alpine-slim-arm64v8"
+  mem_limit: 256
+  conatiner_config:
+    env_var_1: value1
+    env_var_2: multi_value1,multi_value2
+  dr_region_cfg:
+    env_var_1: value1_override
+    env_var_3: new_value

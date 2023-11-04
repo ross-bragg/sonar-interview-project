@@ -9,18 +9,23 @@ from aws_cdk import (
 
 from constructs import Construct
 
+from sonar_interview_project.util.config_loader import ConfigLoader
+
 class LbEcsServiceStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, vpc: ec2.Vpc, ecs_cluster: ecs.Cluster, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, project_config: ConfigLoader, vpc: ec2.Vpc, ecs_cluster: ecs.Cluster, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Task def, service construction
         # does this need to change with deployments or does it get automatically versioned?
+
+        ecs_task_image = project_config.get("ecs_service_config").get("image")
+
         ecs_task_definition = ecs.Ec2TaskDefinition(self, "projectTaskDef")
 
         ecs_task_container = ecs_task_definition.add_container(
             "ProjectTaskContainer",
-            image=ecs.ContainerImage.from_registry("public.ecr.aws/nginx/nginx:1.25-alpine-slim-arm64v8"),
+            image=ecs.ContainerImage.from_registry(ecs_task_image),
             memory_limit_mib=256,
             logging=ecs.LogDrivers.aws_logs(
                 stream_prefix="ProjectLogs",

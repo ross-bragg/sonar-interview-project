@@ -9,12 +9,16 @@ from aws_cdk import (
 
 from constructs import Construct
 
+from sonar_interview_project.util.config_loader import ConfigLoader
+
 class ClusterInfraStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, vpc: ec2.Vpc, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, project_config: ConfigLoader, vpc: ec2.Vpc, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        asg_instance_type = ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL)
+        asg_instance_type = ec2.InstanceType(project_config.get("ecs_cluster_config").get("instance_type"))
+        min_capacity = project_config.get("ecs_cluster_config").get("min")
+        max_capacity = project_config.get("ecs_cluster_config").get("max")
         
         ecs_cluster = ecs.Cluster(self, "projectECSCluster",
                                   vpc=vpc)
@@ -23,15 +27,20 @@ class ClusterInfraStack(Stack):
                                                vpc=vpc,
                                                instance_type=asg_instance_type,
                                                machine_image=ecs.EcsOptimizedImage.amazon_linux2023(hardware_type=ecs.AmiHardwareType.ARM),
-                                               max_capacity=1,
-                                               min_capacity=1,
+                                               max_capacity=min_capacity,
+                                               min_capacity=max_capacity,
                                                new_instances_protected_from_scale_in=False,
                                                # defaults to placement in private subnets.
-                                               key_name="ross_key"
                                             )
         
+        # enable_managed_termination_protection prevents cleaning up the ASG from hanging during deletion
+        # When true this should make it so that ECS won't scale down any instances with containers still on them
+        # But it seems to just block scale down regardless. 
+        # May need to use managed container scaling too, but that's outside the scope of this.
         ecs_asg_cap_provider = ecs.AsgCapacityProvider(self, "EcsAsgCapacityProvider",
-                                                       auto_scaling_group=ecs_asg)
+                                                       auto_scaling_group=ecs_asg,
+                                                       enable_managed_termination_protection=False
+                                                    )
         
         ecs_cluster.add_asg_capacity_provider(ecs_asg_cap_provider)
 

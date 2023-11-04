@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 
 import aws_cdk as cdk
 
@@ -9,10 +10,9 @@ from sonar_interview_project.db_infra import DbInfraStack
 from sonar_interview_project.cluster_infra import ClusterInfraStack
 from sonar_interview_project.ecs_service_infra import LbEcsServiceStack
 
-env = cdk.Environment(account='726431819040', region='us-east-1')
+from sonar_interview_project.util.config_loader import ConfigLoader
 
 app = cdk.App()
-#SonarInterviewProjectStack(app, "SonarInterviewProjectStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,
     # but a single synthesized template can be deployed anywhere.
@@ -28,26 +28,59 @@ app = cdk.App()
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
  #   )
 
-# S3, VPC
-base_infra_stack = BaseInfraStack(app, "SonarInterviewBaseInfraStack", env=env)
+# Get project
+project = app.node.try_get_context("project")
+if not project:
+    raise SystemExit("No project provided, pass in as `-c project=XXX")
 
-# Need to figure out how to use custom SGs without a circular dependency
+# Load and validate project config
+config = ConfigLoader("base")
+
+project_name = config.get("project_name")
+
+main_env = cdk.Environment(account=config.get("aws_config").get("account"), 
+                           region=config.get("aws_config").get("main_region")
+                        )
+
+dr_env = cdk.Environment(account=config.get("aws_config").get("account"), 
+                         region=config.get("aws_config").get("dr_region")
+                      )
+
+print(project_name)
+print(main_env)
+print(dr_env)
+
+# # S3, VPC
+base_infra_stack = BaseInfraStack(app, f"{project_name}BaseInfra", env=main_env,
+                                  project_config=config
+                                )
+
+dr_base_infra_stack = BaseInfraStack(app, f"{project_name}BaseInfraDr", env=dr_env,
+                                  project_config=config
+                                )
+
+
+# # Need to figure out how to use custom SGs without a circular dependency
 # sg_infra_stack = SgInfraStack(app, "SonarInterviewSgInfraStack", env=env,
 #                              vpc=base_infra_stack.vpc)
 
-# DB infra
-db_infra_stack = DbInfraStack(app, "SonarInterviewDbInfraStack", env=env, 
-                              vpc=base_infra_stack.vpc
-                            )
+# # DB infra
+# db_infra_stack = DbInfraStack(app, "SonarInterviewDbInfraStack", env=env, 
+#                               project_config=config,
+#                               vpc=base_infra_stack.vpc
+#                             )
 
-# ASG, ECS cluster
-ecs_cluster_infra_stack = ClusterInfraStack(app, "SonarInterviewASGInfraStack", env=env, 
-                                vpc=base_infra_stack.vpc
-                            )
+# # ASG, ECS cluster
+# ecs_cluster_infra_stack = ClusterInfraStack(app, "SonarInterviewASGInfraStack", env=env, 
+#                                             project_config=config,
+#                                             vpc=base_infra_stack.vpc
+#                                           )
 
-# Application, ALB
-lb_ecs_service_stack = LbEcsServiceStack(app, "SonarInterviewLbEcsServiceStack", env=env,
-                                         vpc=base_infra_stack.vpc,
-                                         ecs_cluster=ecs_cluster_infra_stack.ecs_cluster)
+# # Application, ALB
+# lb_ecs_service_stack = LbEcsServiceStack(app, "SonarInterviewLbEcsServiceStack", env=env,
+#                                          project_config=config,
+#                                          vpc=base_infra_stack.vpc,
+#                                          ecs_cluster=ecs_cluster_infra_stack.ecs_cluster
+#                                       )
 
 app.synth()

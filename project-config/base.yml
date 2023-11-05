@@ -8,8 +8,9 @@ aws_config:
 vpc_config:
   cidr: 10.0.0.0/16
 
-s3_config:
-  is_replica: false #?
+# Nothing to config here for now.
+# s3_config:
+#   is_replica: false #?
 
 db_config:
   instance_type: t4g.large

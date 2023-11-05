@@ -9,6 +9,7 @@ from sonar_interview_project.sg_infra import SgInfraStack
 from sonar_interview_project.db_infra import DbInfraStack
 from sonar_interview_project.cluster_infra import ClusterInfraStack
 from sonar_interview_project.ecs_service_infra import LbEcsServiceStack
+from sonar_interview_project.s3_stack import S3ReplicatedStack
 
 from sonar_interview_project.util.config_loader import ConfigLoader
 
@@ -50,7 +51,7 @@ print(project_name)
 print(main_env)
 print(dr_env)
 
-# # S3, VPC
+# VPC
 base_infra_stack = BaseInfraStack(app, f"{project_name}BaseInfra", env=main_env,
                                   project_config=config
                                 )
@@ -59,10 +60,16 @@ dr_base_infra_stack = BaseInfraStack(app, f"{project_name}BaseInfraDr", env=dr_e
                                   project_config=config
                                 )
 
+s3_dr_region = S3ReplicatedStack(app, f"{project_name}S3Dr", env=dr_env,
+                                 project_config=config)
+
+s3_main_region = S3ReplicatedStack(app, f"{project_name}S3", env=main_env,
+                                 project_config=config)
 
 # # Need to figure out how to use custom SGs without a circular dependency
 # sg_infra_stack = SgInfraStack(app, "SonarInterviewSgInfraStack", env=env,
 #                              vpc=base_infra_stack.vpc)
+# I think I need to do the add_deps thing here.
 
 # # DB infra
 # db_infra_stack = DbInfraStack(app, "SonarInterviewDbInfraStack", env=env, 

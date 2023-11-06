@@ -57,8 +57,8 @@ class S3ReplicatedStack(Stack):
         elif self.region == main_region:
             # Create repl role for source bucket
             self.replication_role = iam.Role(self, "AssetBucketReplRole",
-                                        assumed_by=iam.ServicePrincipal("s3.amazonaws.com")
-                                        )
+                                            assumed_by=iam.ServicePrincipal("s3.amazonaws.com")
+                                            )
             # Attach repl policy to role
             iam.Policy(self, "AssetBucketReplPolicy",
                         roles=[

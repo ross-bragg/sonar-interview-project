@@ -35,7 +35,7 @@ if not project:
     raise SystemExit("No project provided, pass in as `-c project=XXX")
 
 # Load and validate project config
-config = ConfigLoader("base")
+config = ConfigLoader(project)
 
 project_name = config.get("project_name")
 

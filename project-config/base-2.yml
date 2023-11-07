@@ -7,25 +7,43 @@ aws_config:
 
 vpc_config:
   cidr: 10.0.0.0/16
+  nat_gateways: 3
 
-s3_config:
-  is_replica: false #?
+# Nothing to config here for now.
+# s3_config:
+#   is_replica: false #?
 
 db_config:
-  instance_type: t4g.large
-  readers: 0
+  instance_type: r6g.large # aurora global requires >= r6g.large
+  readers: 2
 
 ecs_cluster_config:
-  instance_type: t4g.small
-  min: 1
-  max: 1
+  instance_type: t4g.medium
+  min: 3
+  max: 3
   
 ecs_service_config:
-  image: "public.ecr.aws/nginx/nginx:1.24-alpine-slim-arm64v8"
+  image: "public.ecr.aws/nginx/nginx:1.25-alpine-slim-arm64v8"
   mem_limit: 256
-  conatiner_config:
-    env_var_1: value1
-    env_var_2: multi_value1,multi_value2
-  dr_region_cfg:
-    env_var_1: value1_override
-    env_var_3: new_value
+  us_east_1_config:
+    conatiner:
+      env_var_1: value1
+      env_var_2: multi_value1,multi_value2
+    alb:
+      custom_ingress_rules:
+        - description: east custom rule
+          cidr: 136.49.202.53/32
+          port: 80
+        
+  us_west_2_config:
+    container:
+      env_var_1: value1_override
+      env_var_3: multi_value2,multi_value3
+    alb:
+      custom_ingress_rules:
+        - description: west from Ross
+          cidr: 136.49.202.53/32
+          port: 80
+        - description: another west custom rule
+          cidr: 8.8.8.8/32
+          port: 80

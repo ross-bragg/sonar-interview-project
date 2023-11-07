@@ -15,6 +15,8 @@ class BaseInfraStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         project_name = project_config.get("project_name")
+        cidr = project_config.get("vpc_config").get("cidr")
+        num_gateways = project_config.get("vpc_config").get("nat_gateways")
         region = cdk.Stack.of(self).region
         
         # Create the VPC
@@ -22,9 +24,9 @@ class BaseInfraStack(Stack):
         
         vpc = ec2.Vpc(self, "VPC",
                       vpc_name=f"{project_name}-vpc-{region}",
-                      ip_addresses=ec2.IpAddresses.cidr("10.0.0.0/16"),
-                      nat_gateways=1,
-                      max_azs=3,
+                      ip_addresses=ec2.IpAddresses.cidr(cidr),
+                      nat_gateways=num_gateways,
+                      max_azs=num_gateways,
                       # subnet_configuration - we're fine with the default (public and private)
                       # max_azs - also fine with default (3) 
                       # - HAVE TO SPECIFY ACCOUNT/REGION TO GET THIS, otherwise you get 2
@@ -36,5 +38,5 @@ class BaseInfraStack(Stack):
                         }
                     )
 
-        # export the vpc and s3 bucket
+        # export the vpc
         self.vpc = vpc

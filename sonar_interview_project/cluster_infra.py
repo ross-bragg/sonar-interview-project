@@ -13,23 +13,27 @@ from sonar_interview_project.util.config_loader import ConfigLoader
 
 class ClusterInfraStack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, project_config: ConfigLoader, vpc: ec2.Vpc, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, project_config: ConfigLoader, vpc: ec2.Vpc, cluster_sg: ec2.SecurityGroup, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        project_name = project_config.get("project_name")
 
         asg_instance_type = ec2.InstanceType(project_config.get("ecs_cluster_config").get("instance_type"))
         min_capacity = project_config.get("ecs_cluster_config").get("min")
         max_capacity = project_config.get("ecs_cluster_config").get("max")
         
-        ecs_cluster = ecs.Cluster(self, "projectECSCluster",
+        ecs_cluster = ecs.Cluster(self, f"{project_name}ECSCluster",
                                   vpc=vpc)
         
-        ecs_asg = autoscaling.AutoScalingGroup(self, "ProjectECSClusterASG",
+        # Need to grant S3 access here
+        ecs_asg = autoscaling.AutoScalingGroup(self, f"{project_name}ECSClusterASG",
                                                vpc=vpc,
                                                instance_type=asg_instance_type,
                                                machine_image=ecs.EcsOptimizedImage.amazon_linux2023(hardware_type=ecs.AmiHardwareType.ARM),
-                                               max_capacity=min_capacity,
-                                               min_capacity=max_capacity,
+                                               max_capacity=max_capacity,
+                                               min_capacity=min_capacity,
                                                new_instances_protected_from_scale_in=False,
+                                               security_group=cluster_sg
                                                # defaults to placement in private subnets.
                                             )
         
@@ -37,7 +41,7 @@ class ClusterInfraStack(Stack):
         # When true this should make it so that ECS won't scale down any instances with containers still on them
         # But it seems to just block scale down regardless. 
         # May need to use managed container scaling too, but that's outside the scope of this.
-        ecs_asg_cap_provider = ecs.AsgCapacityProvider(self, "EcsAsgCapacityProvider",
+        ecs_asg_cap_provider = ecs.AsgCapacityProvider(self, f"{project_name}AsgCapProvider",
                                                        auto_scaling_group=ecs_asg,
                                                        enable_managed_termination_protection=False
                                                     )
@@ -45,25 +49,6 @@ class ClusterInfraStack(Stack):
         ecs_cluster.add_asg_capacity_provider(ecs_asg_cap_provider)
 
         # grant s3 access here too?
-
-        # Allow ingress to instances from Nat GW (private IP?)
-        ecs_asg.connections.allow_from(
-            ec2.Peer.ipv4('10.0.28.221/32'),
-            ec2.Port.tcp(22),
-            "ssh from Nat Gateway"
-        )
-
-        ecs_asg.connections.allow_to(
-            ec2.Peer.any_ipv4(),
-            ec2.Port.tcp(5432),
-            "EC2 instance access to DBs"
-        )
-
-        ecs_asg.connections.allow_from(
-            ec2.Peer.any_ipv4(),
-            ec2.Port.all_tcp(),
-            "Instance access from ALB"
-        )
 
         # export ecs cluster
         self.ecs_cluster = ecs_cluster

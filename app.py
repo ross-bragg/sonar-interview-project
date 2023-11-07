@@ -65,19 +65,19 @@ sgs_dr_region = SgInfraStack(app, f"{project_name}SGsDr", env=dr_env,
                              project_config=config)
 
 # Aurora Global DB infra
-# global_db_main_region = GlobalDbInfraStack(app, f"{project_name}GlobalDb", env=main_env,
-#                                            vpc=base_infra_main_region.vpc,
-#                                            project_config=config,
-#                                            db_sg=sgs_main_region.db_sg
-#                                           )
+global_db_main_region = GlobalDbInfraStack(app, f"{project_name}GlobalDb", env=main_env,
+                                           vpc=base_infra_main_region.vpc,
+                                           project_config=config,
+                                           db_sg=sgs_main_region.db_sg
+                                          )
 
-# global_db_dr_region = GlobalDbInfraStack(app, f"{project_name}GlobalDbDr", env=dr_env,
-#                                           vpc=base_infra_dr_region.vpc,
-#                                           project_config=config,
-#                                           db_sg=sgs_dr_region.db_sg,
-#                                           is_disaster=is_disaster
-#                                        )
-# global_db_dr_region.add_dependency(global_db_main_region)
+global_db_dr_region = GlobalDbInfraStack(app, f"{project_name}GlobalDbDr", env=dr_env,
+                                          vpc=base_infra_dr_region.vpc,
+                                          project_config=config,
+                                          db_sg=sgs_dr_region.db_sg,
+                                          is_disaster=is_disaster
+                                       )
+global_db_dr_region.add_dependency(global_db_main_region)
 
 # # ASG, ECS cluster
 ecs_cluster_main_region = ClusterInfraStack(app, f"{project_name}ASG", env=main_env, 

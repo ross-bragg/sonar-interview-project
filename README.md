@@ -45,4 +45,6 @@ This is also why the IAM roles aren't added to the S3 bucket- we need to modify 
 
 * A potential addition is to put a JsonSchema in the config loader. This will help catch config errors earlier than runtime validation. Additionally, validation and testing of the stacks.
 
-* in the ecs service stack, I address parameters differently than in other stacks (region-hardcoded config names vs "is main region or dr region?"). This should be fixed.
+* In the ecs service stack, I address parameters differently than in other stacks (region-hardcoded config names vs "is main region or dr region?"). This should be fixed.
+
+* Allowing the ASGs to only talk to the ALB SG broke ECS service registration. I had to let the ASG SG talk to everything otherwise instances wouldn't regsiter. I didn't realize this was something I needed to do- at my current job this is probably covered by our enterprise SGs.

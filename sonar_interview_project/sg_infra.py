@@ -25,7 +25,7 @@ class SgInfraStack(Stack):
         ecs_cluster_sg = ec2.SecurityGroup(self, f"{project_name}EcsClusterSg",
                             vpc=vpc,
                             description="Allow egress to DB, ingress from alb",
-                            allow_all_outbound=False)
+                            allow_all_outbound=True)
         
         alb_sg = ec2.SecurityGroup(self, f"{project_name}AlbSg",
                             vpc=vpc,
@@ -52,6 +52,13 @@ class SgInfraStack(Stack):
             "Allow connections from ALB"
         )
 
+        # ecs_cluster_sg.connections.allow_from(
+        #     ec2.Peer.any_ipv4(),
+        #     ec2.Port.all_tcp(),
+        #     "Allow connections from ALB"
+        # )
+
+
         alb_sg.connections.allow_to(
             ecs_cluster_sg,
             ec2.Port.all_tcp(),
@@ -59,7 +66,7 @@ class SgInfraStack(Stack):
         )
 
         for ingress_rule in alb_custom_ingress:
-            alb_sg.connections.allow_to(
+            alb_sg.connections.allow_from(
                 ec2.Peer.ipv4(ingress_rule.get("cidr")),
                 ec2.Port.tcp(ingress_rule.get("port")),
                 ingress_rule.get("description")
